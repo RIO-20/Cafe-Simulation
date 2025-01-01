@@ -23,10 +23,10 @@ mai usor. De exemplu: ( Încapsulare )
 */
 
 //Functii ajutatoare
-void enableUTF8() {
+void enableUTF8() { //Functie care face posibila afisarea si citirea caracterelor care contin diacritice
 #ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
-    SetConsoleCP(CP_UTF8);  // Ensure input also uses UTF-8 encoding
+    SetConsoleCP(CP_UTF8);  
 #endif
 }
 
@@ -132,6 +132,123 @@ public:
             cerr << e.what() << endl;
         }
     }
+
+    void getAction() override { // ( Polimorfism )
+        string firstName, lastName, city, role;
+        int day;
+        
+        cout << "Enter First Name: ";
+        cin >> firstName;
+        cout << "Enter Last Name: ";
+        cin >> lastName;
+        cout << "Enter City: ";
+        cin >> city;
+        
+        while(true){
+            cout << "Enter Role: ";
+            cin >> role;
+
+            
+            if(role != "manager" && role !="barista" && role != "ospătar")
+                cout<<"This role doesn't exist!"<<endl;
+            else
+                break;
+        }
+
+        cout << "Enter Day: ";
+        cin >> day;
+
+        
+        string inputFile = "CSV_files/angajati.csv";
+        string tempFile = "CSV_files/aux.csv";
+
+        
+        ifstream inFile(inputFile);
+        ofstream outFile(tempFile);
+
+        if (!inFile.is_open() || !outFile.is_open()) {
+            cerr << "Error opening file." << endl;
+            return;
+        }
+
+        string line;
+        bool found = false;
+
+        
+        while (getline(inFile, line)) {
+            stringstream ss(line);
+            vector<string> row;
+            string cell;
+
+            
+            while (getline(ss, cell, ',')) {
+                row.push_back(cell);
+            }
+
+            
+            if (row.size() == 9 && 
+                row[0] == firstName && 
+                row[1] == lastName && 
+                row[6] == city && 
+                row[7] == role && 
+                stoi(row[8]) == day) {
+                found = true;
+                continue; 
+            }
+
+        
+            outFile << line << "\n";
+        }
+
+        inFile.close();
+        outFile.close();
+
+        if (found) {
+            
+            if (remove(inputFile.c_str()) != 0) {
+                cerr << "Error deleting original file." << endl;
+            } else if (rename(tempFile.c_str(), inputFile.c_str()) != 0) {
+                cerr << "Error renaming temporary file." << endl;
+            } else {
+                cout << "Record deleted and rows updated successfully." << endl;
+            }
+        } else {
+            cerr << "Record not found." << endl;
+            remove(tempFile.c_str()); 
+        }
+    }
+
+    void displayAll(const string& filePath){
+        ifstream inFile(filePath);
+
+        
+        if(!inFile.is_open()){
+            cerr<<"Error opening file: "<<filePath<<endl;
+        }
+
+        string line;
+        int row_num = 0;
+
+        while(getline(inFile,line)){
+            row_num++;
+            stringstream ss(line);
+            vector<string> row;
+            string elem;
+
+            while(getline(ss,elem,','))
+                row.push_back(elem);
+
+            for(int i = 0 ; i < row.size(); ++i){
+                cout<<row[i];
+
+                if(i < row.size() - 1)
+                    cout<<" | ";
+            }
+
+            cout<<endl;
+
+        }
+    }
 };
 
 
@@ -206,6 +323,93 @@ public:
             cerr << e.what() << endl;
         }
     }
+
+    //Aceasta functie scoate angajatii din sistem.
+    void getAction() override { // ( Polimorfism )
+        string firstName, lastName, city, role;
+        int day;
+        
+        cout << "Enter First Name: ";
+        cin >> firstName;
+        cout << "Enter Last Name: ";
+        cin >> lastName;
+        cout << "Enter City: ";
+        cin >> city;
+        
+        while(true){
+            cout << "Enter Role: ";
+            cin >> role;
+
+            if(role == "manager")
+                cout<<"You are not allowed to remove this person"<<endl;
+            else if(role != "manager" && role !="barista" && role != "ospătar")
+                cout<<"This role doesn't exist!"<<endl;
+            else
+                break;
+        }
+
+        cout << "Enter Day: ";
+        cin >> day;
+
+        
+        string inputFile = "CSV_files/angajati.csv";
+        string tempFile = "CSV_files/aux.csv";
+
+        
+        ifstream inFile(inputFile);
+        ofstream outFile(tempFile);
+
+        if (!inFile.is_open() || !outFile.is_open()) {
+            cerr << "Error opening file." << endl;
+            return;
+        }
+
+        string line;
+        bool found = false;
+
+        
+        while (getline(inFile, line)) {
+            stringstream ss(line);
+            vector<string> row;
+            string cell;
+
+            
+            while (getline(ss, cell, ',')) {
+                row.push_back(cell);
+            }
+
+            
+            if (row.size() == 9 && 
+                row[0] == firstName && 
+                row[1] == lastName && 
+                row[6] == city && 
+                row[7] == role && 
+                stoi(row[8]) == day) {
+                found = true;
+                continue; 
+            }
+
+        
+            outFile << line << "\n";
+        }
+
+        inFile.close();
+        outFile.close();
+
+        if (found) {
+            
+            if (remove(inputFile.c_str()) != 0) {
+                cerr << "Error deleting original file." << endl;
+            } else if (rename(tempFile.c_str(), inputFile.c_str()) != 0) {
+                cerr << "Error renaming temporary file." << endl;
+            } else {
+                cout << "Record deleted and rows updated successfully." << endl;
+            }
+        } else {
+            cerr << "Record not found." << endl;
+            remove(tempFile.c_str()); 
+        }
+    }
 };
 
 class Waiter:public Employee{
@@ -246,31 +450,47 @@ void generateMenu(){
 
             if(ch == '1'){
                 cout<<"Welcome ADMIN!"<<endl;
+                Admin adm;
 
                 while(true){
                     
                     int choice;
                     cout<<"You can make the following actions: "<<endl;
                     cout<<"1.Hire a person"<<endl;
-                    cout<<"2.Inspect one of the database"<<endl;
-                    cout<<"3.See the financial report for the current day"<<endl;
-                    cout<<"4.Exit/ Go to next day"<<endl;
+                    cout<<"2.Remove a person"<<endl;
+                    cout<<"3.Inspect one of the database"<<endl;
+                    cout<<"4.See the financial report for the current day"<<endl;
+                    cout<<"5.Exit/ Go to next day"<<endl;
 
                     cin>>choice;
 
                     switch(choice){
                         case 1:{
+                            adm.setData();
                             break;
                         }
                         case 2:{
+                            adm.getAction();
                             break;
                         }
                         case 3:{
                             break;
                         }
                         case 4:{
-                            day++;
-                            goto start;
+                            break;
+                        }
+                        case 5:{
+                            char opt;
+                            cout<<"Do you want to go to the next day: Y/N? "<<endl;
+
+                            cin>>opt;
+                            if(opt == 'y' || opt == 'Y'){
+                                day++;
+                                goto start;
+                            }
+                            else
+                                goto start;
+
                             break;
                         }
                         default:
@@ -278,15 +498,6 @@ void generateMenu(){
                             break;
                         
                     }
-                    /*Manager man; // ( Clase și Obiecte )
-                    man.setData();
-                    ofstream file("CSV_files/angajati.csv", ios::app);  
-
-                    if (!file.is_open()) {
-                        throw runtime_error("Error: Unable to open file for writing.");
-                    }
-
-                    file<<day<<endl;*/
                 }
             }
             else if(ch == '2'){
@@ -356,11 +567,6 @@ void generateMenu(){
 int main(void){
 
     enableUTF8();
-
-    /*Manager manager;
-    manager.setData();
-    */
-
     generateMenu();
 
 
