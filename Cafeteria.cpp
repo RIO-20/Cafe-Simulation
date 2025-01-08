@@ -11,11 +11,11 @@
 #include <stdexcept>
 using namespace std;
 
+
 //Ionescu Raul-Andrei, 321AC
 
 /*
-In acest program s-au folosit urmatoarele concepte: Clase și Obiecte: 2 ori , Constructori și Destructori: 1 ori,Încapsulare: 1 ori,
-Moștenire: 0 ori, Polimorfism: 1 ori, Abstractizare: 1 ori, Templates: 0 ori, Exceptions: 3 ori, Design Patterns: 0 ori.
+In acest program s-au folosit urmatoarele concepte: Clase și Obiecte: 2 ori , Constructori și Destructori: 1 ori,Încapsulare: 1 ori, Moștenire: 4 ori, Polimorfism: 1 ori, Abstractizare: 1 ori, Templates: 0 ori, Exceptions: 3 ori, Design Patterns: 1 ori.
 
 Pentru a vedea mai usor toate conceptele de OOP folosite in program am adaugat un comentariu cu 
 conceptul folosit de fiecare data pentru a ajuta pe oricine analizeaza acest cod sa le gaseasca
@@ -30,16 +30,120 @@ void enableUTF8() { //Functie care face posibila afisarea si citirea caracterelo
 #endif
 }
 
+vector<string> split(const string& str, char delimiter) {
+    vector<string> tokens;
+    stringstream ss(str);
+    string item;
+    while (getline(ss, item, delimiter)) {
+        tokens.push_back(item);
+    }
+    return tokens;
+}
+
+//Transforma string-urile care au Uppercase in Lowercase
+string toLowercase(const string& input) {
+    string result = input;
+    transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char c) { return tolower(c); });
+    return result;
+}
+
+//Functie care se ocupa cu stocarea tuturor produselor din meniu intr-un vector de string-uri
+vector<string> getProductNames(const string& csv) {
+    vector<string> productNames;
+    vector<string> lines = split(csv, '\n');
+
+  
+    for (size_t i = 1; i < lines.size(); ++i) {
+        vector<string> fields = split(lines[i], ',');
+        if (!fields.empty()) {
+            productNames.push_back(toLowercase(fields[0]));
+        }
+    }
+    return productNames;
+}
+
+//( Design Pattern - Abstract Factory )
+class Beverage{
+    public:
+        virtual void prepare() = 0;
+
+        Beverage(){ cout<<"Beverage created"<<endl; } // ( Constructor )
+        virtual ~Beverage() {}; // ( Destructor )
+};
+
+class Drink: public Beverage{
+
+    void prepare() override {
+        cout<<"Preparing the drink"<<endl;
+    }
+        
+};
+
+class Snack: public Beverage{
+
+    void prepare() override {
+        cout<<"Preparing the snack"<<endl;
+    }
+
+};
+
+class BeverageFactory{
+    public:
+        virtual Beverage* createDrink() = 0;
+        virtual Beverage* createSnack() = 0;
+        virtual ~BeverageFactory() = default;
+};
+
+class DrinkFactory: public BeverageFactory{
+
+    Beverage* createDrink() override{
+        return new Drink();
+    }
+
+    Beverage* createSnack(){
+        return nullptr;
+    }
+};
+
+
+class SnackFactory: public BeverageFactory{
+
+    Beverage* createDrink() override{
+       return nullptr;
+    }
+
+    Beverage* createSnack(){
+        return new Snack();
+    }
+};
+
+string checkBeverage(BeverageFactory* factory){
+    
+    Beverage* drink = factory->createDrink();
+    Beverage* snack = factory->createSnack();
+
+    if(drink && snack)
+        return "menu";
+    else if(drink)
+        return "drink";
+    else if(snack)
+        return "snack";
+    else
+        return "none";
+
+}
+
 
 
 // Clasa Abstracta pentru angajati (Abstractizare)
-class Employee {
+class Employee { 
 //( Încapsulare )
 protected:
     string fname;       // First name
     string lname;       // Last name
     int hourly_rate;    // Hourly rate
-    int start_hour;     // Start hour of shift
+    int start_hour;     // Start hour of shifts
     int end_hour;       // End hour of shift
     int salary;         //Salary
     string city;        //City
@@ -58,7 +162,7 @@ public:
 };
 
 
-class Admin : public Employee {
+class Admin : public Employee { // ( Moștenire )
 //( Încapsulare )
 public:
     void setData() override { // (Polimorfism)
@@ -253,8 +357,8 @@ public:
 
 
 
-//Clasa Manager mosteneste clasa Employee (Moștenire)
-class Manager : public Employee {
+
+class Manager : public Employee { // ( Moștenire )
 //( Încapsulare )
 public:
     void setData() override { // (Polimorfism)
@@ -410,15 +514,222 @@ public:
             remove(tempFile.c_str()); 
         }
     }
+
+    void getIngridient(int day){
+        enableUTF8();
+        string name,type,city;
+        int quantity;
+        double price;
+        
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cout<<"Introduce the product name: ";
+        getline(cin, name);
+        cout<<"Introduce the product type: ";
+        getline(cin, type);
+        cout<<"Introduce the product quantity: ";
+
+        while(true){
+            try{
+                cin>>quantity;
+                if(quantity <= 0)
+                    throw runtime_error("Invalid quantity.");
+                break;
+            }
+            catch(const runtime_error& e){
+                cout << e.what() << " Please try again." << endl;
+            }
+        }
+
+        cout<<"Introduce the price of the product: ";
+        cin>>price;
+
+        cout<<"Introduce the city where do you want to receive: ";
+        cin>>city;
+
+        ofstream file;
+        file.open("CSV_files/ingrediente.csv", ios::app);
+
+         file << name << ","
+         << quantity << ","
+         << price << ","
+         << city << ","
+         << day << "\n";
+        
+        file.close();
+
+    }
 };
 
-class Waiter:public Employee{
+class Barista:public Employee{ // ( Moștenire )
+
+    void getAction() override{
+       
+    }
 
 };
 
+/*class Waiter:public Employee{ // ( Moștenire )
 
 
-//Interfata platformei de lucru atat pentru angajati dar si pentru clienti (ca un fel de site) facuta in 2 limbi
+
+};*/
+
+
+class Customer{
+    protected:
+        string first_name;
+        string last_name;
+        string order;
+        float total_price;
+        string city;
+        vector<pair<string, float>> products;
+    
+    public:
+
+        void getOrder(int day){
+
+            cout<<"Enter First Name: ";
+            cin>>first_name;
+            cout<<"Enter Last Name:";
+            cin>>last_name;
+
+            vector<string> selectedProducts;
+            vector<float> productPrices;
+            string product;
+
+            cout << "Enter products to order (type 'done' to finish):" << endl;
+            cin.ignore(); 
+
+            while (true) {
+                cout << "Product: ";
+                getline(cin, product);
+
+                if (product == "done") {
+                    break;
+                }
+
+                bool found = false;
+                for (const auto& p : products) {
+                    if (p.first == product) {
+                        selectedProducts.push_back(p.first);
+                        productPrices.push_back(p.second);
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    cout << "Invalid product. Please try again." << endl;
+                }
+            }
+
+            order = buildOrderString(selectedProducts);
+            total_price = calculateTotalPrice(productPrices);  
+
+            cout<<"Introduce the city: ";
+            cin>>city;
+
+            bool is_loyal = false;      
+
+            ofstream file;
+            file.open("CSV_files/comenzi.csv", ios::app);
+
+            file << first_name << ","
+            << last_name << ","
+            << order << ","
+            << total_price << ","
+            << city << ","
+            <<day<<","
+            <<is_loyal<<"\n";
+
+            file.close();
+        }
+
+        void getDataMenu() {
+            const string& filePath = "CSV_files/menu.csv";
+            ifstream file(filePath);
+            if (!file.is_open()) {
+                cerr << "Error: Unable to open file " << filePath << endl;
+            return;
+            }
+
+            string line;
+            getline(file, line);
+
+      
+            while (getline(file, line)) {
+                stringstream ss(line);
+                string productName, priceString;
+                float price;
+
+                if (getline(ss, productName, ',') && getline(ss, priceString)) {
+                    try {
+                        price = stof(priceString);
+                        products.emplace_back(productName, price);
+                    } catch (const invalid_argument&) {
+                        cerr << "Invalid price format in line: " << line << endl;
+                    }
+                }
+            }
+
+            file.close();
+        }
+
+
+        void showMenu(){
+            const string& filePath = "CSV_files/menu.csv";
+            ifstream inFile(filePath);
+
+        
+            if(!inFile.is_open()){
+                cerr<<"Error opening file: "<<filePath<<endl;
+            }
+
+            string line;
+            int row_num = 0;
+
+            while(getline(inFile,line)){
+                row_num++;
+                stringstream ss(line);
+                vector<string> row;
+                string elem;
+
+                while(getline(ss,elem,','))
+                    row.push_back(elem);
+
+                for(int i = 0 ; i < row.size(); ++i){
+                    cout<<row[i];
+
+                    if(i < row.size() - 1)
+                        cout<<" | ";
+                }
+
+                cout<<endl;
+
+            }
+        }
+
+    private:
+        string buildOrderString(const vector<string>& products) {
+            if (products.empty()) return "";
+
+            string result = products[0];
+            for (size_t i = 1; i < products.size(); ++i) {
+                result += " & " + products[i];
+            }
+            return result;
+        }
+
+        float calculateTotalPrice(const vector<float>& prices) {
+            float total = 0.0f;
+            for (float price : prices) {
+                total += price;
+            }
+            return total;
+        }
+};
+
+//Interfata platformei de lucru atat pentru angajati dar si pentru clienti (ca un fel de site)
 void generateMenu(){
 
     enableUTF8();
@@ -501,10 +812,94 @@ void generateMenu(){
                 }
             }
             else if(ch == '2'){
+                char choice;
                 cout<<"Welcome EMPLOYEE!"<<endl;
+                cout<<"Choose from the following roles: "<<endl;
+                cout<<"1.Manager"<<endl;
+                cout<<"2.Waiter"<<endl;
+                cout<<"3.Barista"<<endl;
+
+                cin>>choice;
+
+                if(choice == '1'){
+                    Manager man;
+                    cout<<"Welcome Manger!"<<endl;
+                    cout<<"You can make the following actions: "<<endl;
+                    cout<<"1.Hire a person"<<endl;
+                    cout<<"2.Remove a person"<<endl;
+                    cout<<"3.Get the neccesary ingredients"<<endl;
+                    cout<<"4.Organize special events"<<endl;
+                    cout<<"5.Exit/ Go to next day"<<endl;
+                    
+                    int alg;
+                    cin>>alg;
+
+                     switch(alg){
+                        case 1:{
+                            man.setData();
+                            break;
+                        }
+                        case 2:{
+                            man.getAction();
+                            break;
+                        }
+                        case 3:{
+                            man.getIngridient(day);
+                            break;
+                        }
+                        case 4:{
+                            break;
+                        }
+                        case 5:{
+                            char opt;
+                            cout<<"Do you want to go to the next day: Y/N? "<<endl;
+
+                            cin>>opt;
+                            if(opt == 'y' || opt == 'Y'){
+                                day++;
+                                goto start;
+                            }
+                            else
+                                goto start;
+
+                            break;
+                        }
+                        default:
+                            cout << "Please introduce one of the options above." << endl;
+                            break;
+                        
+                    }
+                }
+                else if(choice == '2'){
+
+                }
+                else if(choice == '3'){
+
+                }
+                else{
+                    cout<<"Invalid choice!"<<endl;
+                }
+
             }
             else if(ch == '3'){
+                Customer cust;
+                int choice;
                 cout<<"Welcome Customer!"<<endl;
+                cout<<"You have the following options:"<<endl;
+                cout<<"1.Order"<<endl;
+                cout<<"2.See the menu"<<endl;
+
+                cin>>choice;
+
+                if(choice == 1){
+                    cust.getDataMenu();
+                    cust.getOrder(day);
+                }
+                else if(choice == 2){
+                    cust.showMenu();
+                }
+                else
+                    cout<<"Invalid choice!"<<endl;
             }
             else{
                 char ans;
