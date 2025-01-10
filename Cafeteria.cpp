@@ -479,7 +479,7 @@ protected:
     string role;        //Role    
 
 public:
-    virtual void setData() = 0; // Pure virtual function
+    virtual void setData(int day) = 0; // Pure virtual function
 
     int getSalary(){
         return (this->end_hour - this->start_hour) * this->hourly_rate;
@@ -494,7 +494,7 @@ public:
 class Admin : public Employee { // ( Moștenire ) // ( Clasa )
 //( Încapsulare )
 public:
-    void setData() override { // (Polimorfism)
+    void setData(int day) override { // (Polimorfism)
 
         enableUTF8();
 
@@ -554,7 +554,7 @@ public:
             file << fname << "," << lname << "," << hourly_rate << " lei," 
                 << start_hour << ":00," << end_hour << ":00," 
                 << getSalary() << " lei," 
-                << city << ","<<role<<",";
+                << city << ","<<role<<","<<day<<"\n";
 
         
             file.close();
@@ -693,7 +693,7 @@ public:
 class Manager : public Employee { // ( Moștenire ) // ( Clasa )
 //( Încapsulare )
 public:
-    void setData() override { // (Polimorfism)
+    void setData(int day) override { // (Polimorfism)
 
         enableUTF8();
 
@@ -748,7 +748,7 @@ public:
             file << fname << "," << lname << "," << hourly_rate << " lei," 
                 << start_hour << ":00," << end_hour << ":00," 
                 << getSalary() << " lei," 
-                << city << ","<<role<<",";
+                << city << ","<<role<<","<<day<<"\n";
 
         
             file.close();
@@ -1596,7 +1596,7 @@ void generateMenu(){
 
                     switch(choice){
                         case 1:{
-                            adm.setData();
+                            adm.setData(day);
                             break;
                         }
                         case 2:{
@@ -1689,7 +1689,7 @@ void generateMenu(){
 
                      switch(alg){
                         case 1:{
-                            man.setData();
+                            man.setData(day);
                             break;
                         }
                         case 2:{
