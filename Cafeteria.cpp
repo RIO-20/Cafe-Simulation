@@ -566,26 +566,24 @@ public:
         }
     }
 
-    void getAction() override { // ( Polimorfism )
-        
+   void getAction() override {
         enableUTF8();
         string firstName, lastName, oras, rol;
         int day;
-        
+
         cout << "Enter First Name: ";
         cin >> firstName;
         cout << "Enter Last Name: ";
         cin >> lastName;
         cout << "Enter City: ";
         cin >> oras;
-        
+
         while(true){
             cout << "Enter Role: ";
             cin >> rol;
 
-            
-            if(rol != "manager" && rol !="barista" && rol != "ospătar")
-                cout<<"This role doesn't exist!"<<endl;
+            if(rol != "manager" && rol != "barista" && rol != "ospătar")
+                cout << "This role doesn't exist!" << endl;
             else
                 break;
         }
@@ -593,11 +591,9 @@ public:
         cout << "Enter Day: ";
         cin >> day;
 
-        
         string inputFile = "CSV_files/angajati.csv";
         string tempFile = "CSV_files/aux.csv";
 
-        
         ifstream inFile(inputFile);
         ofstream outFile(tempFile);
 
@@ -609,47 +605,49 @@ public:
         string line;
         bool found = false;
 
-        
+        // Function to trim leading/trailing whitespaces from a string
+        auto trim = [](string& str) {
+            str.erase(0, str.find_first_not_of(' '));  // leading whitespaces
+            str.erase(str.find_last_not_of(' ') + 1);  // trailing whitespaces
+        };
+
         while (getline(inFile, line)) {
             stringstream ss(line);
             vector<string> row;
             string cell;
 
-            
             while (getline(ss, cell, ',')) {
+                trim(cell); // Trim each cell to avoid comparison errors
                 row.push_back(cell);
             }
 
-            
-            if (row.size() == 9 && 
+            if (row.size() == 9 &&
                 row[0] == firstName && 
                 row[1] == lastName && 
                 row[6] == oras && 
                 row[7] == rol && 
                 stoi(row[8]) == day) {
                 found = true;
-                continue; 
+                continue;  // Skip writing this record to the new file
             }
 
-        
-            outFile << line << "\n";
+            outFile << line << "\n"; // Write the remaining lines
         }
 
         inFile.close();
         outFile.close();
 
         if (found) {
-            
             if (remove(inputFile.c_str()) != 0) {
-                cerr << "Error deleting original file." << endl;
+                perror("Error deleting original file");
             } else if (rename(tempFile.c_str(), inputFile.c_str()) != 0) {
-                cerr << "Error renaming temporary file." << endl;
+                perror("Error renaming temporary file");
             } else {
                 cout << "Record deleted and rows updated successfully." << endl;
             }
         } else {
             cerr << "Record not found." << endl;
-            remove(tempFile.c_str()); 
+            remove(tempFile.c_str()); // Clean up the temporary file if not found
         }
     }
 
@@ -761,26 +759,27 @@ public:
     }
 
     //Aceasta functie scoate angajatii din sistem.
-    void getAction() override { // ( Polimorfism )
+   void getAction() override {
         enableUTF8();
         string firstName, lastName, oras, rol;
         int day;
-        
+
         cout << "Enter First Name: ";
         cin >> firstName;
         cout << "Enter Last Name: ";
         cin >> lastName;
         cout << "Enter City: ";
         cin >> oras;
-        
+
         while(true){
             cout << "Enter Role: ";
             cin >> rol;
 
             if(rol == "manager")
-                cout<<"You are not allowed to remove this person"<<endl;
-            else if(rol != "manager" && role !="barista" && rol != "ospătar")
-                cout<<"This role doesn't exist!"<<endl;
+                cout<<"You are not allowed to delete this role!"<<endl;
+
+            if(rol != "manager" && rol != "barista" && rol != "ospătar")
+                cout << "This role doesn't exist!" << endl;
             else
                 break;
         }
@@ -788,11 +787,9 @@ public:
         cout << "Enter Day: ";
         cin >> day;
 
-        
         string inputFile = "CSV_files/angajati.csv";
         string tempFile = "CSV_files/aux.csv";
 
-        
         ifstream inFile(inputFile);
         ofstream outFile(tempFile);
 
@@ -804,47 +801,49 @@ public:
         string line;
         bool found = false;
 
-        
+        // Function to trim leading/trailing whitespaces from a string
+        auto trim = [](string& str) {
+            str.erase(0, str.find_first_not_of(' '));  // leading whitespaces
+            str.erase(str.find_last_not_of(' ') + 1);  // trailing whitespaces
+        };
+
         while (getline(inFile, line)) {
             stringstream ss(line);
             vector<string> row;
             string cell;
 
-            
             while (getline(ss, cell, ',')) {
+                trim(cell); // Trim each cell to avoid comparison errors
                 row.push_back(cell);
             }
 
-            
-            if (row.size() == 9 && 
+            if (row.size() == 9 &&
                 row[0] == firstName && 
                 row[1] == lastName && 
                 row[6] == oras && 
                 row[7] == rol && 
                 stoi(row[8]) == day) {
                 found = true;
-                continue; 
+                continue;  // Skip writing this record to the new file
             }
 
-        
-            outFile << line << "\n";
+            outFile << line << "\n"; // Write the remaining lines
         }
 
         inFile.close();
         outFile.close();
 
         if (found) {
-            
             if (remove(inputFile.c_str()) != 0) {
-                cerr << "Error deleting original file." << endl;
+                perror("Error deleting original file");
             } else if (rename(tempFile.c_str(), inputFile.c_str()) != 0) {
-                cerr << "Error renaming temporary file." << endl;
+                perror("Error renaming temporary file");
             } else {
                 cout << "Record deleted and rows updated successfully." << endl;
             }
         } else {
             cerr << "Record not found." << endl;
-            remove(tempFile.c_str()); 
+            remove(tempFile.c_str()); // Clean up the temporary file if not found
         }
     }
 
