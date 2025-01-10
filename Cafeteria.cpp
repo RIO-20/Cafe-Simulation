@@ -15,15 +15,16 @@ using namespace std;
 //Ionescu Raul-Andrei, 321AC
 
 /*
-In acest program s-au folosit urmatoarele concepte: Clase și Obiecte: 2 ori , Constructori și Destructori: 1 ori,Încapsulare: 1 ori, Moștenire: 4 ori, Polimorfism: 1 ori, Abstractizare: 1 ori, Templates: 0 ori, Exceptions: 3 ori, Design Patterns: 1 ori.
+In acest program s-au folosit urmatoarele concepte: Clase și Obiecte: 2 ori , Constructori și Destructori: 3 ori,Încapsulare: 3 ori, Moștenire: 4 ori, Polimorfism: 4 ori, Abstractizare: 1 ori, Templates: 1 ori, Exceptions: 3 ori, Design Patterns: 1 ori.
 
 Pentru a vedea mai usor toate conceptele de OOP folosite in program am adaugat un comentariu cu 
 conceptul folosit de fiecare data pentru a ajuta pe oricine analizeaza acest cod sa le gaseasca
 mai usor. De exemplu: ( Încapsulare )
 */
 
+     
 //Functii ajutatoare
-void enableUTF8() { //Functie care face posibila afisarea si citirea caracterelor care contin diacritice
+void enableUTF8() {        //Functie care face posibila afisarea si citirea caracterelor care contin diacritice
 #ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);  
@@ -63,8 +64,40 @@ vector<string> getProductNames(const string& csv) {
     return productNames;
 }
 
+map<string, float> loadProductsFromCSV(const string& filename) {
+    map<string, float> products;
+    ifstream file(filename);
+    string line;
+
+    // Check if the file was successfully opened
+    if (!file.is_open()) {
+        cerr << "Error: Could not open the file " << filename << endl;
+        return products;
+    }
+
+    // Skip the header row (optional, if your CSV has one)
+    getline(file, line);
+
+    // Read each line in the file
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string name;
+        float price;
+
+        // Read product name and price
+        getline(ss, name, ',');  // Read product name, up to the comma
+        ss >> price;  // Read the price (after the comma)
+        
+        // Add to the map
+        products[name] = price;
+    }
+
+    file.close();
+    return products;
+}
+
 //( Design Pattern - Abstract Factory )
-class Beverage{
+class Beverage{ // ( Clasa )
     public:
         virtual void prepare() = 0;
 
@@ -72,7 +105,7 @@ class Beverage{
         virtual ~Beverage() {}; // ( Destructor )
 };
 
-class Drink: public Beverage{
+class Drink: public Beverage{ // ( Clasa )
 
     void prepare() override {
         cout<<"Preparing the drink"<<endl;
@@ -80,7 +113,7 @@ class Drink: public Beverage{
         
 };
 
-class Snack: public Beverage{
+class Snack: public Beverage{ // ( Clasa )
 
     void prepare() override {
         cout<<"Preparing the snack"<<endl;
@@ -88,14 +121,14 @@ class Snack: public Beverage{
 
 };
 
-class BeverageFactory{
+class BeverageFactory{ // ( Clasa )
     public:
         virtual Beverage* createDrink() = 0;
         virtual Beverage* createSnack() = 0;
         virtual ~BeverageFactory() = default;
 };
 
-class DrinkFactory: public BeverageFactory{
+class DrinkFactory: public BeverageFactory{ // ( Clasa )
 
     Beverage* createDrink() override{
         return new Drink();
@@ -107,7 +140,7 @@ class DrinkFactory: public BeverageFactory{
 };
 
 
-class SnackFactory: public BeverageFactory{
+class SnackFactory: public BeverageFactory{ // ( Clasa )
 
     Beverage* createDrink() override{
        return nullptr;
@@ -118,7 +151,19 @@ class SnackFactory: public BeverageFactory{
     }
 };
 
-string checkBeverage(BeverageFactory* factory){
+class MenuFactory : public BeverageFactory { // ( Clasa )
+public:
+    Beverage* createDrink() override {
+        return new Drink(); 
+    }
+
+    Beverage* createSnack() override {
+        return new Snack(); 
+    }
+};
+
+
+string checkBeverage(BeverageFactory* factory){ 
     
     Beverage* drink = factory->createDrink();
     Beverage* snack = factory->createSnack();
@@ -162,7 +207,7 @@ public:
 };
 
 
-class Admin : public Employee { // ( Moștenire )
+class Admin : public Employee { // ( Moștenire ) // ( Clasa )
 //( Încapsulare )
 public:
     void setData() override { // (Polimorfism)
@@ -238,7 +283,9 @@ public:
     }
 
     void getAction() override { // ( Polimorfism )
-        string firstName, lastName, city, role;
+        
+        enableUTF8();
+        string firstName, lastName, oras, rol;
         int day;
         
         cout << "Enter First Name: ";
@@ -246,14 +293,14 @@ public:
         cout << "Enter Last Name: ";
         cin >> lastName;
         cout << "Enter City: ";
-        cin >> city;
+        cin >> oras;
         
         while(true){
             cout << "Enter Role: ";
-            cin >> role;
+            cin >> rol;
 
             
-            if(role != "manager" && role !="barista" && role != "ospătar")
+            if(rol != "manager" && rol !="barista" && rol != "ospătar")
                 cout<<"This role doesn't exist!"<<endl;
             else
                 break;
@@ -293,8 +340,8 @@ public:
             if (row.size() == 9 && 
                 row[0] == firstName && 
                 row[1] == lastName && 
-                row[6] == city && 
-                row[7] == role && 
+                row[6] == oras && 
+                row[7] == rol && 
                 stoi(row[8]) == day) {
                 found = true;
                 continue; 
@@ -323,6 +370,7 @@ public:
     }
 
     void displayAll(const string& filePath){
+        enableUTF8();
         ifstream inFile(filePath);
 
         
@@ -342,7 +390,7 @@ public:
             while(getline(ss,elem,','))
                 row.push_back(elem);
 
-            for(int i = 0 ; i < row.size(); ++i){
+            for(unsigned i = 0 ; i < row.size(); ++i){
                 cout<<row[i];
 
                 if(i < row.size() - 1)
@@ -358,7 +406,7 @@ public:
 
 
 
-class Manager : public Employee { // ( Moștenire )
+class Manager : public Employee { // ( Moștenire ) // ( Clasa )
 //( Încapsulare )
 public:
     void setData() override { // (Polimorfism)
@@ -430,7 +478,8 @@ public:
 
     //Aceasta functie scoate angajatii din sistem.
     void getAction() override { // ( Polimorfism )
-        string firstName, lastName, city, role;
+        enableUTF8();
+        string firstName, lastName, oras, rol;
         int day;
         
         cout << "Enter First Name: ";
@@ -438,15 +487,15 @@ public:
         cout << "Enter Last Name: ";
         cin >> lastName;
         cout << "Enter City: ";
-        cin >> city;
+        cin >> oras;
         
         while(true){
             cout << "Enter Role: ";
-            cin >> role;
+            cin >> rol;
 
-            if(role == "manager")
+            if(rol == "manager")
                 cout<<"You are not allowed to remove this person"<<endl;
-            else if(role != "manager" && role !="barista" && role != "ospătar")
+            else if(rol != "manager" && role !="barista" && rol != "ospătar")
                 cout<<"This role doesn't exist!"<<endl;
             else
                 break;
@@ -486,8 +535,8 @@ public:
             if (row.size() == 9 && 
                 row[0] == firstName && 
                 row[1] == lastName && 
-                row[6] == city && 
-                row[7] == role && 
+                row[6] == oras && 
+                row[7] == rol && 
                 stoi(row[8]) == day) {
                 found = true;
                 continue; 
@@ -517,7 +566,7 @@ public:
 
     void getIngridient(int day){
         enableUTF8();
-        string name,type,city;
+        string name,type,oras;
         int quantity;
         double price;
         
@@ -544,7 +593,7 @@ public:
         cin>>price;
 
         cout<<"Introduce the city where do you want to receive: ";
-        cin>>city;
+        cin>>oras;
 
         ofstream file;
         file.open("CSV_files/ingrediente.csv", ios::app);
@@ -552,7 +601,7 @@ public:
          file << name << ","
          << quantity << ","
          << price << ","
-         << city << ","
+         << oras << ","
          << day << "\n";
         
         file.close();
@@ -560,10 +609,10 @@ public:
     }
 };
 
-class Barista:public Employee{ // ( Moștenire )
+class Barista:public Employee{ // ( Moștenire )  
 
     void getAction() override{
-       
+       enableUTF8();
     }
 
 };
@@ -587,7 +636,11 @@ class Customer{
     public:
 
         void getOrder(int day){
+            enableUTF8();
+            const map<string, float> products = loadProductsFromCSV("CSV_files/menu.csv");
 
+        
+            enableUTF8();
             cout<<"Enter First Name: ";
             cin>>first_name;
             cout<<"Enter Last Name:";
@@ -596,6 +649,59 @@ class Customer{
             vector<string> selectedProducts;
             vector<float> productPrices;
             string product;
+
+            cout<<"Which type of order do you want to have? "<<endl;
+            cout<<"1.Only drinks"<<endl;
+            cout<<"2.Only snacks"<<endl;
+            cout<<"3.Both types"<<endl;
+            string res;
+
+            while(true){
+                int alg;
+                cin>>alg;
+               
+
+                if(alg == 1){
+                    DrinkFactory drink;
+                    res = checkBeverage(&drink);
+                    break;
+                }
+                else if(alg == 2){
+                    SnackFactory snack;
+                    res = checkBeverage(&snack);
+                    break;
+                }
+                else if(alg == 3){
+                    MenuFactory menu;
+                    res = checkBeverage(&menu);
+                    break;
+                }
+                else
+                    cout<<"Invalid choice"<<endl;
+            }
+
+            vector<string> allowedProducts;
+
+
+            if (res == "drink") {
+                for (const auto& [name, price] : products) {
+                    if (name == "Espresso" || name == "Latte" || name.find("Tea") != string::npos ||
+                        name == "Water" || name == "Pepsi" || name == "Orange Juice" || name == "Lemonade") {
+                        allowedProducts.push_back(toLowercase(name));
+                    }
+                }
+            } else if (res == "snack") {
+                for (const auto& [name, price] : products) {
+                    if (name == "Chocolate Chip Biscuits" || name == "Banana Bread" || 
+                        name == "Sandwich" || name == "Croissant") {
+                        allowedProducts.push_back(toLowercase(name));
+                    }
+                }
+            } else if (res == "menu") {
+                for (const auto& [name, price] : products) {
+                    allowedProducts.push_back(toLowercase(name));
+                }
+            }
 
             cout << "Enter products to order (type 'done' to finish):" << endl;
             cin.ignore(); 
@@ -608,23 +714,18 @@ class Customer{
                     break;
                 }
 
-                bool found = false;
-                for (const auto& p : products) {
-                    if (p.first == product) {
-                        selectedProducts.push_back(p.first);
-                        productPrices.push_back(p.second);
-                        found = true;
-                        break;
-                    }
-                }
+                string case_Sensitiv = toLowercase(product);
 
-                if (!found) {
-                    cout << "Invalid product. Please try again." << endl;
+                if (find(allowedProducts.begin(), allowedProducts.end(), case_Sensitiv) != allowedProducts.end()) {
+                    selectedProducts.push_back(product);
+                    productPrices.push_back(products.at(product)); 
+                } else {
+                    cout << "Invalid product for the selected type. Please try again." << endl;
                 }
             }
 
             order = buildOrderString(selectedProducts);
-            total_price = calculateTotalPrice(productPrices);  
+            total_price = calculateTotalPrice<float>(productPrices);  
 
             cout<<"Introduce the city: ";
             cin>>city;
@@ -639,6 +740,7 @@ class Customer{
             << order << ","
             << total_price << ","
             << city << ","
+            <<"preparing,"
             <<day<<","
             <<is_loyal<<"\n";
 
@@ -697,7 +799,7 @@ class Customer{
                 while(getline(ss,elem,','))
                     row.push_back(elem);
 
-                for(int i = 0 ; i < row.size(); ++i){
+                for(unsigned int i = 0 ; i < row.size(); ++i){
                     cout<<row[i];
 
                     if(i < row.size() - 1)
@@ -710,19 +812,20 @@ class Customer{
         }
 
     private:
-        string buildOrderString(const vector<string>& products) {
-            if (products.empty()) return "";
+        string buildOrderString(const vector<string>& prod) {
+            if (prod.empty()) return "";
 
-            string result = products[0];
-            for (size_t i = 1; i < products.size(); ++i) {
-                result += " & " + products[i];
+            string result = prod[0];
+            for (size_t i = 1; i < prod.size(); ++i) {
+                result += " & " + prod[i];
             }
             return result;
         }
 
-        float calculateTotalPrice(const vector<float>& prices) {
-            float total = 0.0f;
-            for (float price : prices) {
+        template <typename X>
+        X calculateTotalPrice(const vector<X>& prices) { // ( Templates )
+            X total = 0.0f;
+            for (X price : prices) {
                 total += price;
             }
             return total;
@@ -734,19 +837,19 @@ void generateMenu(){
 
     enableUTF8();
 
-    char lan;
+    //char lan;
     
     cout<<"Welcome to Royal Coffe Shop"<<endl;
     restart:    
-        cout<<"Choose one of the languages below: "<<endl;
+        /*cout<<"Choose one of the languages below: "<<endl;
         cout<<"1.English"<<endl;
-        cout<<"2.Română"<<endl;
+        cout<<"2.Română"<<endl;*/
 
-    cin>>lan;
+    //cin>>lan;
 
     while(true){
         int day = 1;
-        if(lan == '1'){
+        //if(lan == '1'){
         start:    
             char ch;
 
@@ -917,7 +1020,7 @@ void generateMenu(){
                     break;
                 }
             }
-        }
+        //}
         /*else if(lan == '2'){
 
             getchar();
@@ -952,10 +1055,10 @@ void generateMenu(){
             }
 
         }*/
-        else{
+        /*else{
             cout<<"Please choose a valid language"<<endl;
             goto restart;
-        }
+        }*/
     }
 }
 
