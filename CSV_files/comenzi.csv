@@ -1,2 +1,3 @@
-First Name,Last Name,Order,Price,City,Day,Is_loyal
-Mihai,Popescu,Espresso & Pepsi & Banana Bread,48,București,1,0
+First Name,Last Name,Order,Price,City,Day,Status,Is_loyal
+Mihai,Popescu,Espresso & Pepsi & Banana Bread,48,București,1,preparing,0
+Andrei,Ionescu,Espresso & Pepsi,28,Cluj-Napoca,preparing,1,0
