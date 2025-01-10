@@ -269,6 +269,200 @@ string checkBeverage(BeverageFactory* factory){
 
 }
 
+class FinancialReport {
+private:
+    unordered_map<string, unordered_map<int, float>> financial_report;
+
+    // Helper function to clean up string and convert to float
+    float stringToFloat(const string& value) {
+        string cleaned = value;
+        
+        // Remove spaces
+        cleaned.erase(remove(cleaned.begin(), cleaned.end(), ' '), cleaned.end());
+        
+        // Remove " lei" or any other non-numeric symbols
+        if (cleaned.find("lei") != string::npos) {
+            cleaned.replace(cleaned.find("lei"), 3, "");
+        }
+        
+        try {
+            return stof(cleaned);  // Try to convert the cleaned string to a float
+        } catch (const invalid_argument& e) {
+            cerr << "Invalid argument: Could not convert '" << cleaned << "' to a float." << endl;
+            return 0.0;  // Default to 0 in case of an error
+        }
+    }
+
+    // Helper function to convert string to integer
+    int stringToInt(const string& value) {
+        try {
+            return stoi(value);  // Try to convert to integer
+        } catch (const invalid_argument& e) {
+            cerr << "Invalid argument: Could not convert '" << value << "' to an integer." << endl;
+            return 0;  // Default to 0 in case of an error
+        }
+    }
+
+    // Process salary expenses (reading salaries data)
+    void processSalaries(const string& fileName) {
+        ifstream file(fileName);
+        string line;
+        
+        // Skip the header row
+        getline(file, line);
+        
+        while (getline(file, line)) {
+            stringstream ss(line);
+            string firstName, lastName, hourRate, startHour, endHour, daySalary, city, role;
+            int day;
+            
+            getline(ss, firstName, ',');
+            getline(ss, lastName, ',');
+            getline(ss, hourRate, ',');
+            getline(ss, startHour, ',');
+            getline(ss, endHour, ',');
+            getline(ss, daySalary, ',');
+            getline(ss, city, ',');
+            getline(ss, role, ',');
+            ss >> day;
+
+            // Skip rows with invalid or empty values
+            if (daySalary.empty() || city.empty()) {
+                continue;
+            }
+
+            // Clean and convert salary to float
+            float salary = stringToFloat(daySalary);
+            financial_report[city][day] -= salary;  // Salaries are expenses, subtract from total
+        }
+    }
+
+    // Process sales data as expenses
+    void processSales(const string& fileName) {
+        ifstream file(fileName);
+        string line;
+        
+        // Skip the header row
+        getline(file, line);
+        
+        while (getline(file, line)) {
+            stringstream ss(line);
+            string name, cost, city;
+            int day;
+
+            getline(ss, name, ',');
+            getline(ss, cost, ',');
+            getline(ss, city, ',');
+            ss >> day;
+
+            // Skip rows with invalid or empty values
+            if (cost.empty() || city.empty()) {
+                continue;
+            }
+
+            // Clean and convert cost to float
+            float saleAmount = stringToFloat(cost);
+            financial_report[city][day] -= saleAmount;  // Sales are expenses, subtract from total
+        }
+    }
+
+    // Process inventory data as expenses
+    void processInventory(const string& fileName) {
+        ifstream file(fileName);
+        string line;
+        
+        // Skip the header row
+        getline(file, line);
+        
+        while (getline(file, line)) {
+            stringstream ss(line);
+            string name, quantity, price, city;
+            int day;
+
+            getline(ss, name, ',');
+            getline(ss, quantity, ',');
+            getline(ss, price, ',');
+            getline(ss, city, ',');
+            ss >> day;
+
+            // Skip rows with invalid or empty values
+            if (quantity.empty() || price.empty() || city.empty()) {
+                continue;
+            }
+
+            // Clean and convert price to float and quantity to int
+            float totalPrice = stringToFloat(price) * stringToInt(quantity);  // Calculate total cost for the items
+            financial_report[city][day] -= totalPrice;  // Inventory costs are expenses
+        }
+    }
+
+    // Process orders as income
+    void processOrders(const string& fileName) {
+        ifstream file(fileName);
+        string line;
+
+        // Skip the header row
+        getline(file, line);
+        
+        while (getline(file, line)) {
+            stringstream ss(line);
+            string firstName, lastName, order, price, city, status, isLoyal;
+            int day;
+            
+            getline(ss, firstName, ',');
+            getline(ss, lastName, ',');
+            getline(ss, order, ',');
+            getline(ss, price, ',');
+            getline(ss, city, ',');
+            ss >> day;
+            getline(ss, status, ',');
+            getline(ss, isLoyal, ',');
+
+            // Skip rows with invalid or empty values
+            if (price.empty() || city.empty()) {
+                continue;
+            }
+
+            // Clean and convert order price to float
+            float orderAmount = stringToFloat(price);
+            financial_report[city][day] += orderAmount;  // Orders are income, add to total
+        }
+    }
+
+public:
+    // Function to process all CSV files and populate the financial report
+    void processReport() {
+        processSales("CSV_Files/even_spec.csv");
+        processSalaries("CSV_Files/angajati.csv");
+        processInventory("CSV_Files/ingrediente.csv");
+        processOrders("CSV_Files/comenzi.csv");
+    }
+
+    // Function to save the financial report to "rap_finan.csv"
+    void saveReport() {
+        ofstream file("CSV_Files/rap_finan.csv");
+        
+        if (file.is_open()) {
+            file << "City,Day,Total\n"; // CSV header
+
+            for (const auto& cityEntry : financial_report) {
+                const string& city = cityEntry.first;
+                for (const auto& dayEntry : cityEntry.second) {
+                    int day = dayEntry.first;
+                    float totalAmount = dayEntry.second;
+
+                    // Write to CSV (expenses negative, income positive)
+                    file << city << "," << day << "," << totalAmount << " lei\n";
+                }
+            }
+
+            file.close();
+            cout << "Financial report saved to rap_finan.csv" << endl;
+        } else {
+            cout << "Error: Unable to open the file for writing." << endl;
+        }
+    }
+};
 
 
 // Clasa Abstracta pentru angajati (Abstractizare)
@@ -882,39 +1076,29 @@ private:
     }
 };
 
-// Define the safeStringToInt function
-int safeStringToInt(const std::string& str) {
+// Helper function to check if a string is a valid integer
+bool isValidInteger(const std::string& str) {
     try {
-        return std::stoi(str);  // Try to convert to integer
-    } catch (const std::invalid_argument& e) {
-        std::cerr << "Invalid argument: cannot convert '" << str << "' to integer\n";
-        return -1;  // Return -1 or any appropriate error value
-    } catch (const std::out_of_range& e) {
-        std::cerr << "Out of range: '" << str << "' is too large to be an integer\n";
-        return -1;  // Return -1 or handle out-of-range case as needed
+        std::stoi(str);  // Try converting string to integer
+        return true;
+    } catch (const std::invalid_argument&) {
+        return false; // If invalid argument is thrown, return false
+    } catch (const std::out_of_range&) {
+        return false; // If number is out of range
     }
 }
 
+//Inca nu functioneaza cum trebuie , mai trebuie lucrata la aceasta functie
+// Waiter class
 class Waiter {
+
 public:
-    // Public wrapper method to call process and finalize orders
-    void processAndFinalizeOrders(const std::string& orderFile, const std::string& ingredientFile, const std::string& productFile) {
-        checkAndFinalizeOrder(orderFile, ingredientFile, productFile);
-    }
-
-private:
-    // Set of pre-packaged items to check for availability in the ingredient file
-    std::unordered_set<std::string> prePackagedItems = {
-        "Pepsi", "Water", "Chocolate chip biscuits", "Banana bread", "Sandwich", "Croissant"
-    };
-
-    // Method to check and finalize the order (originally private)
-    void checkAndFinalizeOrder(const std::string& orderFile, const std::string& ingredientFile, const std::string& productFile) {
+     void checkAndFinalizeOrder(const std::string& orderFile, const std::string& ingredientFile, const std::string& productFile) {
         // Step 1: Read ingredients (pre-packaged items) from ingrediente.csv
         std::unordered_map<std::string, int> ingredients;
         readIngredients(ingredientFile, ingredients);
 
-        // Step 2: Read the order list from comenzi.csv
+        // Step 2: Read order list from comenzi.csv
         std::ifstream orderFileIn(orderFile);
         std::string line;
         std::vector<std::string> orderLines;
@@ -929,17 +1113,21 @@ private:
             std::getline(ss, order, ',');
             std::getline(ss, price, ',');
             std::getline(ss, city, ',');
-            std::getline(ss, dayStr, ',');  // Get "Day" field as string
+            std::getline(ss, dayStr, ',');
             std::getline(ss, status, ',');
             std::getline(ss, isLoyalStr, ',');
 
-            // Use safeStringToInt to convert the string to int for day
-            int day = safeStringToInt(dayStr);
+            // Ensure 'dayStr' is valid before converting to integer
+            if (!isValidInteger(dayStr)) {
+                std::cout << "Skipping invalid order line: " << line << "\n";
+                continue;  // Skip invalid rows
+            }
+            int day = std::stoi(dayStr);  // Now safe to call std::stoi
 
-            // If the conversion failed (e.g., returns -1), we can skip or handle it.
-            if (day == -1) {
-                std::cout << "Skipping invalid order line: " << line << std::endl;
-                continue; // Skip this order if day conversion failed
+            // Ensure loyalty column is valid
+            bool isLoyal = false;
+            if (!isLoyalStr.empty() && isValidInteger(isLoyalStr)) {
+                isLoyal = std::stoi(isLoyalStr); // Assuming loyalty is 0 or 1
             }
 
             std::unordered_map<std::string, int> orderedItems = getOrderedItems(order);
@@ -948,14 +1136,23 @@ private:
             bool canFinalize = checkItemsAvailability(orderedItems, ingredients, productFile);
 
             if (canFinalize) {
-                finalizeOrder(line, status, orderFile, orderedItems, ingredients, orderFileIn, orderLines, orderFile);
+                finalizeOrder(line, orderFile, orderedItems, ingredients, city);
             } else {
                 std::cout << "Order could not be finalized: Insufficient items\n";
             }
         }
     }
 
-    // Method to read ingredients from the ingrediente.csv file
+private:
+    // Set of pre-packaged items to check
+    std::unordered_set<std::string> prePackagedItems = {
+        "Pepsi", "Water", "Chocolate chip biscuits", "Banana bread", "Sandwich", "Croissant"
+    };
+
+    // Method to check if the order can be finalized
+   
+
+    // Read ingredients from the CSV file into the map
     void readIngredients(const std::string& ingredientFile, std::unordered_map<std::string, int>& ingredients) {
         std::ifstream inFile(ingredientFile);
         std::string line;
@@ -971,19 +1168,18 @@ private:
             std::getline(ss, city, ',');
             std::getline(ss, dayStr, ',');
 
-            // Use safeStringToInt to handle conversion
-            quantity = safeStringToInt(quantityStr);
-
-            if (quantity == -1) {
-                std::cerr << "Skipping ingredient with invalid quantity: " << name << std::endl;
-                continue; // Skip invalid ingredients
+            // Skip invalid or empty quantity
+            if (!isValidInteger(quantityStr)) {
+                std::cout << "Skipping ingredient with invalid quantity: " << line << "\n";
+                continue;
             }
 
+            quantity = std::stoi(quantityStr);
             ingredients[name] = quantity;
         }
     }
 
-    // Method to parse the order string and get the ordered items
+    // Get a map of ordered items
     std::unordered_map<std::string, int> getOrderedItems(const std::string& orderStr) {
         std::unordered_map<std::string, int> orderedItems;
         std::stringstream orderStream(orderStr);
@@ -996,13 +1192,13 @@ private:
         return orderedItems;
     }
 
-    // Method to check if ordered items are available in both `ingrediente.csv` and `produse.csv`
+    // Check items availability in the inventory and products
     bool checkItemsAvailability(const std::unordered_map<std::string, int>& orderedItems, std::unordered_map<std::string, int>& ingredients, const std::string& productFile) {
         std::ifstream productFileIn(productFile);
         std::unordered_set<std::string> preparedItems;
         std::string productLine;
 
-        // Read the prepared products from producse.csv (Barista-made items)
+        // Read the prepared products from producse.csv (Barista made items)
         while (std::getline(productFileIn, productLine)) {
             std::stringstream ss(productLine);
             std::string name;
@@ -1015,7 +1211,7 @@ private:
             // Check if the item is in the pre-packaged list and is available in ingredients
             if (prePackagedItems.find(item) != prePackagedItems.end()) {
                 if (ingredients.find(item) != ingredients.end() && ingredients[item] >= quantity) {
-                    // Decrement the available quantity in ingredientes.csv
+                    // Decrement the available quantity in ingredients
                     ingredients[item] -= quantity;
                 } else {
                     std::cout << "Not enough " << item << " in stock.\n";
@@ -1035,25 +1231,41 @@ private:
         return true;
     }
 
-    // Method to finalize an order: update status and ingredient quantities
-    void finalizeOrder(const std::string& orderLine, const std::string& status,
-                       const std::string& orderFile, std::unordered_map<std::string, int>& orderedItems,
+    // Finalize the order by writing the updated order and ingredients to CSV
+    void finalizeOrder(const std::string& orderLine, const std::string& orderFile, 
+                       const std::unordered_map<std::string, int>& orderedItems, 
                        std::unordered_map<std::string, int>& ingredients, 
-                       std::ifstream& orderFileIn, std::vector<std::string>& orderLines,
-                       const std::string& orderFileName) {
+                       const std::string& city) {
+
         // Update the order status from preparing to finalized
-        std::ofstream outFile(orderFileName, std::ios_base::out);  // Overwrite file
-        for (const auto& line : orderLines) {
+        std::ifstream inFile(orderFile);
+        std::ofstream outFile("temp.csv");  // Temporary file to overwrite original
+
+        std::string line;
+        while (std::getline(inFile, line)) {
+            // Skip first row (header)
+            if (line.find("First Name") != std::string::npos) {
+                outFile << line << "\n"; 
+                continue;
+            }
+
             if (line.find(orderLine) != std::string::npos) {
-                outFile << line.substr(0, line.find("preparing")) + "finalized\n";
-                break;  // Modify the relevant line
+                // Update the order status to 'finalized'
+                std::string updatedLine = line.substr(0, line.rfind(',')+1) + "finalized," + "0";  // Assuming loyalty remains unchanged
+                outFile << updatedLine << "\n";
             } else {
                 outFile << line << "\n";
             }
         }
+        outFile.close();
+        inFile.close();
+        
+        // Replace original order file with updated file
+        std::remove(orderFile.c_str());
+        std::rename("temp.csv", orderFile.c_str());
 
-        // Now, write the updated ingredients back to ingrediente.csv
-        std::ofstream ingredientFileOut("CSV_Files/ingrediente.csv");
+        // Update the ingredients stock
+        std::ofstream ingredientFileOut("ingrediente.csv");
         for (const auto& [name, qty] : ingredients) {
             ingredientFileOut << name << "," << qty << ",\n";  // Write updated quantities
         }
@@ -1426,6 +1638,9 @@ void generateMenu(){
                             break;
                         }
                         case 4:{
+                            FinancialReport report;
+                            report.processReport();  
+                            report.saveReport();
                             break;
                         }
                         case 5:{
@@ -1512,7 +1727,7 @@ void generateMenu(){
                 else if(choice == '2'){
                     cout<<"Welcome Waiter!"<<endl;
                     Waiter wai;
-                    wai.processAndFinalizeOrders("CSV_Files/comenzi.csv", "CSV_Files/ingrediente.csv", "CSV_Files/produse.csv");
+                    wai.checkAndFinalizeOrder("CSV_Files/comenzi.csv", "CSV_Files/ingrediente.csv", "CSV_Files/produse.csv");
                 }
                 else if(choice == '3'){
                     cout<<"Welcome Barista!"<<endl;
