@@ -97,7 +97,7 @@ map<string, float> loadProductsFromCSV(const string& filename) {
     return products;
 }
 
-void applyDiscountAndUpdateCSV(const string& inputFile, const string& outputFile, const string& city, int day) {
+/*void applyDiscountAndUpdateCSV(const string& inputFile, const string& outputFile, const string& city, int day) {
     ifstream file(inputFile);
     if (!file.is_open()) {
         cerr << "Error: Unable to open file " << inputFile << endl;
@@ -185,7 +185,7 @@ void applyDiscountAndUpdateCSV(const string& inputFile, const string& outputFile
     remove(inputFile.c_str());
     rename(outputFile.c_str(), inputFile.c_str());
 }
-
+*/
 //( Design Pattern - Abstract Factory )
 class Beverage{ // ( Clasa )
     public:
@@ -1274,278 +1274,233 @@ private:
     }
 };
 
-class Customer{
-    protected:
-        string first_name;
-        string last_name;
-        string order;
-        float total_price;
-        string city;
-        vector<pair<string, float>> products;
-        map<string, float> availableIngredients;  
-        vector<string> unavailableProducts;  
-    
-    public:
-
-         void loadAvailableProducts() {
-                ifstream file("CSV_files/ingrediente.csv");
-
-                if (!file.is_open()) {
-                    cerr << "Error: Unable to open ingredients file" << endl;
-                    return;
-                }
-
-                string line;
-                getline(file, line);  // Skip the header
-
-                // Assuming product availability is based on their names from ingredients (e.g. Coffee, Tea, etc.)
-                while (getline(file, line)) {
-                    stringstream ss(line);
-                    string name, quantityStr, priceStr, city, dayStr;
-                    int quantity, day;
-                    float price;
-
-                    if (getline(ss, name, ',') &&
-                        getline(ss, quantityStr, ',') &&
-                        getline(ss, priceStr, ',') &&
-                        getline(ss, city, ',') &&
-                        getline(ss, dayStr)) {
-                        
-                        quantity = stoi(quantityStr);
-                        price = stof(priceStr);
-                        day = stoi(dayStr);
-
-                        if (quantity > 0) {
-                            availableIngredients[name] = price;  // Only store products with available quantities
-                        } else {
-                            unavailableProducts.push_back(name);  // Track unavailable products
-                        }
-                    }
-                }
-                file.close();
-        }
-
-        void checkAvailableDrinks(vector<string>& allowedProducts) {
-            // Check if ingredients for specific drinks are missing
-            if (availableIngredients.find("Coffee beans") == availableIngredients.end()) {
-                allowedProducts.erase(remove(allowedProducts.begin(), allowedProducts.end(), "espresso"), allowedProducts.end());
-                allowedProducts.erase(remove(allowedProducts.begin(), allowedProducts.end(), "latte"), allowedProducts.end());
-                cout << "We are out of coffee beans. Espresso and Latte are unavailable." << endl;
-            }
-            
-            if (availableIngredients.find("Milk") == availableIngredients.end()) {
-                allowedProducts.erase(remove(allowedProducts.begin(), allowedProducts.end(), "latte"), allowedProducts.end());
-                cout << "We are out of milk. Latte is unavailable." << endl;
-            }
-            
-            if (availableIngredients.find("Orange") == availableIngredients.end()) {
-                allowedProducts.erase(remove(allowedProducts.begin(), allowedProducts.end(), "orange juice"), allowedProducts.end());
-                allowedProducts.erase(remove(allowedProducts.begin(), allowedProducts.end(), "lemonade"), allowedProducts.end());
-                cout << "We are out of oranges. Orange juice and Lemonade are unavailable." << endl;
-            }
-            
-            if (availableIngredients.find("Lemon") == availableIngredients.end()) {
-                allowedProducts.erase(remove(allowedProducts.begin(), allowedProducts.end(), "lemonade"), allowedProducts.end());
-                cout << "We are out of lemons. Lemonade is unavailable." << endl;
-            }
-
-            if (availableIngredients.find("Tea bag") == availableIngredients.end()) {
-                allowedProducts.erase(remove(allowedProducts.begin(), allowedProducts.end(), "green tea"), allowedProducts.end());
-                allowedProducts.erase(remove(allowedProducts.begin(), allowedProducts.end(), "black tea"), allowedProducts.end());
-                cout << "We are out of tea bags. Green tea and Black tea are unavailable." << endl;
-            }
-
-            // Add other necessary checks for snacks or other items
-        }
 
 
-        void getOrder(int day) {
-            const map<string, float> products = loadProductsFromCSV("CSV_files/menu.csv");
+class Customer {
+protected:
+    string first_name;
+    string last_name;
+    string order;
+    float total_price;
+    string city;
+    bool is_loyal;  // Loyalty flag to track customer loyalty status
+    map<string, float> menu; // Maps product names to prices
 
-            loadAvailableProducts();   
-            enableUTF8();
-            cout << "Enter First Name: ";
-            cin >> first_name;
-            cout << "Enter Last Name: ";
-            cin >> last_name;
+public:
+    // Load the menu from a CSV file (assuming the menu.csv contains product names and their prices)
+    void loadMenu() {
+        ifstream file("CSV_files/menu.csv");
 
-            vector<string> selectedProducts;
-            vector<float> productPrices;
-            string product;
-
-            cout << "Which type of order do you want to have? " << endl;
-            cout << "1.Only drinks" << endl;
-            cout << "2.Only snacks" << endl;
-            cout << "3.Both types" << endl;
-            string res;
-
-            while (true) {
-                int alg;
-                cin >> alg;
-
-                if (alg == 1) {
-                    DrinkFactory drink;
-                    res = checkBeverage(&drink);
-                    break;
-                } else if (alg == 2) {
-                    SnackFactory snack;
-                    res = checkBeverage(&snack);
-                    break;
-                } else if (alg == 3) {
-                    MenuFactory menu;
-                    res = checkBeverage(&menu);
-                    break;
-                } else
-                    cout << "Invalid choice" << endl;
-            }
-
-            vector<string> allowedProducts;
-
-            if (res == "drink") {
-                    allowedProducts = {"espresso", "latte", "black tea", "green tea", "orange juice", "lemonade"};
-            } else if (res == "snack") {
-                    allowedProducts = {"chocolate chip biscuits", "banana bread", "sandwich", "croissant"};
-            } else if (res == "menu") {
-                    allowedProducts = {"espresso", "latte", "black tea", "green tea", "orange juice", "lemonade","chocolate chip biscuits", "banana bread", "sandwich", "croissant"};
-            }
-
-            checkAvailableDrinks(allowedProducts);
-
-            cout << "Enter products to order (type 'done' to finish):" << endl;
-            cin.ignore();
-
-             while (true) {
-                cout << "Product: ";
-                getline(cin, product);
-
-                if (product == "done") {
-                    break;
-                }
-
-                string product_lower = toLowercase(product);  
-
-               
-                if (find(allowedProducts.begin(), allowedProducts.end(), product_lower) != allowedProducts.end()) {
-                    selectedProducts.push_back(product);
-                    productPrices.push_back(availableIngredients[product_lower]);
-                } else {
-                    cout << "This product is not available or not supported. Please choose a different product." << endl;
-                }
-            }
-
-            order = buildOrderString(selectedProducts);
-            total_price = calculateTotalPrice<float>(productPrices);
-
-            cout << "Introduce the city: ";
-            cin >> city;
-
-            bool is_loyal = false;
-
-            ofstream file;
-            file.open("CSV_files/comenzi.csv", ios::app);
-
-            file << first_name << ","
-                << last_name << ","
-                << order << ","
-                << total_price << ","
-                << city << ","
-                << day << ","
-                << "preparing" << ","
-                << (is_loyal ? "1" : "0") << "\n";
-
-            file.close();
-
-            // Call the function to apply discounts and update the CSV
-            applyDiscountAndUpdateCSV("CSV_files/comenzi.csv", "CSV_files/comenzi_temp.csv", city, day);
-
-            cout << "Thank you for your order! If eligible, discounts have been applied!" << endl;
-        }
-
-
-
-        void getDataMenu() {
-            const string& filePath = "CSV_files/menu.csv";
-            ifstream file(filePath);
-            if (!file.is_open()) {
-                cerr << "Error: Unable to open file " << filePath << endl;
+        if (!file.is_open()) {
+            cerr << "Error: Unable to open menu file." << endl;
             return;
-            }
+        }
 
-            string line;
-            getline(file, line);
+        string line;
+        getline(file, line); // Skip the header
 
-      
-            while (getline(file, line)) {
-                stringstream ss(line);
-                string productName, priceString;
-                float price;
+        while (getline(file, line)) {
+            stringstream ss(line);
+            string name, priceStr;
+            float price;
 
-                if (getline(ss, productName, ',') && getline(ss, priceString)) {
-                    try {
-                        price = stof(priceString);
-                        products.emplace_back(productName, price);
-                    } catch (const invalid_argument&) {
-                        cerr << "Invalid price format in line: " << line << endl;
-                    }
+            if (getline(ss, name, ',') && getline(ss, priceStr)) {
+                try {
+                    price = stof(priceStr);
+                    menu[name] = price; // Add product to map
+                } catch (const invalid_argument&) {
+                    cerr << "Invalid price format in line: " << line << endl;
                 }
             }
-
-            file.close();
         }
 
+        file.close();
+    }
 
-        void showMenu(){
-            const string& filePath = "CSV_files/menu.csv";
-            ifstream inFile(filePath);
+    void showMenu() {
+        cout << "Menu:" << endl;
+        for (const auto& item : menu) {
+            cout << item.first << " - " << item.second << " ron" << endl;
+        }
+    }
 
-        
-            if(!inFile.is_open()){
-                cerr<<"Error opening file: "<<filePath<<endl;
-            }
+    // Method to check if the customer is loyal based on the number of orders in a city
+    void checkLoyalty(int day) {
+        // Open the file with all customer orders and count the occurrences for the city
+        ifstream file("CSV_files/comenzi.csv");
+        if (!file.is_open()) {
+            cerr << "Error: Unable to open order file." << endl;
+            return;
+        }
 
-            string line;
-            int row_num = 0;
+        string line;
+        int order_count = 0;
 
-            while(getline(inFile,line)){
-                row_num++;
-                stringstream ss(line);
-                vector<string> row;
-                string elem;
+        while (getline(file, line)) {
+            stringstream ss(line);
+            string first_name, last_name, order, total_price, city, day_str, status, loyalty_status;
+            getline(ss, first_name, ',');
+            getline(ss, last_name, ',');
+            getline(ss, order, ',');
+            getline(ss, total_price, ',');
+            getline(ss, city, ',');
+            getline(ss, day_str, ',');
+            getline(ss, status, ',');
+            getline(ss, loyalty_status, ',');
 
-                while(getline(ss,elem,','))
-                    row.push_back(elem);
-
-                for(unsigned int i = 0 ; i < row.size(); ++i){
-                    cout<<row[i];
-
-                    if(i < row.size() - 1)
-                        cout<<" | ";
-                }
-
-                cout<<endl;
-
+            // Count how many orders are from the same city
+            if (city == this->city) {
+                order_count++;
             }
         }
 
-    private:
-        string buildOrderString(const vector<string>& prod) {
-            if (prod.empty()) return "";
+        file.close();
 
-            string result = prod[0];
-            for (size_t i = 1; i < prod.size(); ++i) {
-                result += " & " + prod[i];
+        // Check loyalty based on the number of orders from the same city
+        if (order_count >= 3) {  // For example, more than 3 orders makes the customer loyal
+            is_loyal = true;
+        } else {
+            is_loyal = false;
+        }
+    }
+
+    void getOrder(int day) {
+        loadMenu();  // Load the menu
+
+        cout << "Enter First Name: ";
+        cin >> first_name;
+        cout << "Enter Last Name: ";
+        cin >> last_name;
+
+        vector<string> selectedProducts;
+        vector<float> productPrices;
+        string product;
+
+        cout << "Which type of order do you want to have? " << endl;
+        cout << "1. Only drinks" << endl;
+        cout << "2. Only snacks" << endl;
+        cout << "3. Both types" << endl;
+        string res;
+
+        while (true) {
+            int alg;
+            cin >> alg;
+
+            if (alg == 1) {
+                DrinkFactory drink;
+                res = checkBeverage(&drink);  // Assuming checkBeverage is a method that returns "drink"
+                break;
+            } else if (alg == 2) {
+                SnackFactory snack;
+                res = checkBeverage(&snack);  // Assuming checkBeverage is a method that returns "snack"
+                break;
+            } else if (alg == 3) {
+                MenuFactory menu;
+                res = checkBeverage(&menu);  // Assuming checkBeverage is a method that returns "menu"
+                break;
+            } else {
+                cout << "Invalid choice" << endl;
             }
-            return result;
         }
 
-        template <typename X>
-        X calculateTotalPrice(const vector<X>& prices) { // ( Templates )
-            X total = 0.0f;
-            for (X price : prices) {
-                total += price;
-            }
-            return total;
+        vector<string> allowedProducts;
+
+        if (res == "drink") {
+            allowedProducts = {"Espresso", "Latte", "Orange juice", "Lemonade", "Green tea", "Black tea"};
+        } else if (res == "snack") {
+            allowedProducts = {"Chocolate chip biscuits", "Banana bread", "Sandwich", "Croissant"};
+        } else if (res == "menu") {
+            allowedProducts = {"Espresso", "Latte", "Orange juice", "Lemonade", "Green tea", "Black tea", 
+                                "Chocolate chip biscuits", "Banana bread", "Sandwich", "Croissant"};
         }
+
+        cout << "Enter products to order (type 'done' to finish):" << endl;
+
+        cin.ignore();  // To clear the newline left by previous input
+        while (true) {
+            cout << "Product: ";
+            getline(cin, product);
+
+            if (product == "done") {
+                break;
+            }
+
+            // Convert the product name to lowercase for comparison
+            string product_lower = toLowercase(product);
+
+            // Check if the product exists in the menu
+            if (menu.find(product) != menu.end()) {
+                selectedProducts.push_back(product);
+                productPrices.push_back(menu[product]);
+            } else {
+                cout << "This product is not available. Please choose a different product." << endl;
+            }
+        }
+
+        // Build the order string
+        order = buildOrderString(selectedProducts);
+        total_price = calculateTotalPrice<float>(productPrices);
+
+        // Check the loyalty status of the customer
+        cout << "Enter city: ";
+        cin >> city;
+        checkLoyalty(day);  // Pass the day to check the loyalty based on the number of orders
+
+        // Apply loyalty discount (for example, 10% off for loyal customers)
+        if (is_loyal) {
+            cout << "You are a loyal customer! A 10% discount has been applied!" << endl;
+            total_price *= 0.9;  // Apply 10% discount for loyal customers
+        }
+
+        cout << "Your Order: " << order << endl;
+        cout << "Total Price: " << total_price << " ron" << endl;
+
+        // Save the order to a file (including loyalty status)
+        ofstream file;
+        file.open("CSV_files/comenzi.csv", ios::app);
+
+        file << first_name << ","
+            << last_name << ","
+            << order << ","
+            << total_price << ","
+            << city << ","
+            << day << ","
+            << "preparing" << ","  // Placeholder for order status
+            << (is_loyal ? "1" : "0") << "\n";  // 1 if loyal, 0 if not loyal
+
+        file.close();
+
+        cout << "Thank you for your order!" << endl;
+    }
+
+private:
+    // Function to convert product name to lowercase for case-insensitive comparison
+    string toLowercase(const string& str) {
+        string lower = str;
+        transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+        return lower;
+    }
+
+    // Build the order string by concatenating the product names
+    string buildOrderString(const vector<string>& prod) {
+        if (prod.empty()) return "";
+
+        string result = prod[0];
+        for (size_t i = 1; i < prod.size(); ++i) {
+            result += " & " + prod[i];
+        }
+        return result;
+    }
+
+    // Calculate the total price of the order
+    template <typename X>
+    X calculateTotalPrice(const vector<X>& prices) {
+        X total = 0.0f;
+        for (X price : prices) {
+            total += price;
+        }
+        return total;
+    }
 };
 
 //Interfata platformei de lucru atat pentru angajati dar si pentru clienti (ca un fel de site)
@@ -1753,7 +1708,6 @@ void generateMenu(){
                 cin>>choice;
 
                 if(choice == 1){
-                    cust.getDataMenu();
                     cust.getOrder(day);
                 }
                 else if(choice == 2){
